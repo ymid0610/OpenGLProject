@@ -1,41 +1,48 @@
-# Prerequisites
-*.d
+## Visual Studio IDE 캐시
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+## 빌드 출력물 (C++ OpenGL)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]uild/
+[Bb]ld/
 
-# Precompiled Headers
-*.gch
+## 중간/임시 파일
+*.log
+*.tlog
+*.tmp
+*.temp
+*.bak
+
+## IntelliSense / 데이터베이스
+*.ipch
 *.pch
-
-# Linker files
+*.pdb
+*.idb
 *.ilk
 
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
+## 기타 자동 생성 파일
 *.exe
-*.out
-*.app
+*.dll
+*.lib
+*.exp
+*.sdf
+*.opensdf
+*.opendb
 
-# debug information files
-*.dwo
+## OS 관련 파일
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
