@@ -11,6 +11,8 @@ GLvoid Reshape(int w, int h);
 
 static bool left_button;
 
+void Mouse(int button, int state, int x, int y);
+
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	//--- 윈도우 생성하기
@@ -31,8 +33,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		std::cout << "GLEW Initialized\n";
 		glutDisplayFunc(drawScene); // 출력 함수의 지정
 		glutReshapeFunc(Reshape); // 다시 그리기 함수 지정
-		//glutMouseFunc(Mouse);
-		//glutMotionFunc(Motion);
+		glutMouseFunc(Mouse);
 		glutMainLoop(); // 이벤트 처리 시작
 	}
 }
@@ -60,6 +61,8 @@ static CLASSRECT rect2(-0.5f, 0.5f, 0.5f);
 static CLASSRECT rect3(-0.5f, -0.5f, 0.5f);
 static CLASSRECT rect4(0.5f, -0.5f, 0.5f);
 
+int cursor_x, cursor_y;
+
 GLvoid drawScene() //--- 콜백 함수: 출력 콜백 함수 
 {
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f); // 바탕색을 ‘blue’로 지정
@@ -84,8 +87,8 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 
 void Mouse(int button, int state, int x, int y)
 {
-	if (button == GLUT_LEFT_BUTTON) {
-
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		std::cout << "x = " << x << " y = " << y << std::endl;
 	}
 }
 
