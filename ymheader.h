@@ -56,14 +56,14 @@ public:
 		size = (x2 - x1) / 2.0f;
 		if (size > (y2 - y1) / 2.0f) size = (y2 - y1) / 2.0f;
 	}
-	void size_up(int max) {
+	void size_up(float max) {
 		if (size >= max) return;
 		size += 0.05f;
 		remake_x1y1x2y2();
 	}
-	void size_down(int min) {
+	void size_down(float min) {
 		if (size <= min) return;
-		size -= 0.05f;
+		size -= 0.01f;
 		remake_x1y1x2y2();
 	}
 	void union_rect(YMRECT rect) {
@@ -75,14 +75,14 @@ public:
 		random_color();
 	}
 	YMRECT devide_rect() {
-		int random = rand() % 5;
+		int random = rand() % 10;
 		for (int i = 0; i < random + 1; i++) {
-			size_down(0.1f);
+			size_down(0.05f);
 		}
 		remake_x1y1x2y2();
 
 		YMRECT temp;
-		temp.x = x + size; temp.y = y + size; temp.size = size;
+		temp.x = x + 2 * size; temp.y = y; temp.size = size;
 		temp.remake_x1y1x2y2();
 		return temp;
 	}

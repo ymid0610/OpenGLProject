@@ -93,6 +93,21 @@ void Mouse(int button, int state, int x, int y) {
 		}
 		left_clicked = -1;
 	}
+	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		std::cout << "right " << "x = " << x << " y = " << y << std::endl;
+		GLfloat ogl_x = ConvertMouseToOpenGLX(x, 800);
+		GLfloat ogl_y = ConvertMouseToOpenGLY(y, 800);
+		for (int i = 0; i < rects.size(); i++) {
+			if (rects[i].is_mouse_inside(ogl_x, ogl_y) && rects.size() <= MAX_RECT_COUNT) {
+				std::cout << i << "¹øÂ° rect Å¬¸¯µÊ\n";
+				rects.push_back(rects[i].devide_rect());
+				break;
+			}
+		}
+	}
+	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_UP) {
+		std::cout << "right up" << std::endl;
+	}
 	glutPostRedisplay();
 }
 void Motion(int x, int y) {
