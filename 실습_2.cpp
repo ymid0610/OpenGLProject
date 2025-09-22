@@ -6,9 +6,6 @@
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 
-//void Mouse(int button, int state, int x, int y);
-//void Motion(int x, int y);
-
 static bool left_button;
 
 void Mouse(int button, int state, int x, int y);
