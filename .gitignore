@@ -46,3 +46,7 @@ x86/
 Thumbs.db
 ehthumbs.db
 [Dd]esktop.ini
+
+## 커밋 깔끔하게 하기위해 추가함
+OpenGLProject.vcxproj
+OpenGLProject.vcxproj.filters
