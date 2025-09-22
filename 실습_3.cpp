@@ -10,7 +10,7 @@
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 
-static bool left_clicked;
+static int left_clicked = -1;
 static bool right_clicked;
 
 void Mouse(int button, int state, int x, int y);
@@ -66,16 +66,40 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 {
 	glViewport(0, 0, w, h);
 }
-
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-
+		for (int i = 0; i < rects.size(); i++) {
+			GLfloat ogl_x = ConvertMouseToOpenGLX(x, 800);
+			GLfloat ogl_y = ConvertMouseToOpenGLY(y, 800);
+			if (rects[i].is_mouse_inside(ogl_x, ogl_y)) {
+				std::cout << i << "번째 rect 클릭됨\n";
+				left_clicked = i;
+				break;
+			}
+		}
+	}
+	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+		if (left_clicked < 0) {
+			return;
+		}
+		for (int i = 0; i < rects.size(); i++) {
+			if (rects[i].is_rect_inside(rects[left_clicked]) && (left_clicked >= 0 && left_clicked != i)) {
+				std::cout << left_clicked << "번째 rect가 " << i << "번째 rect 안에 들어감\n";
+				rects[i].union_rect(rects[left_clicked]);
+				rects.erase(rects.begin() + left_clicked);
+				left_clicked = -1;
+				break;
+			}
+		}
+		left_clicked = -1;
 	}
 	glutPostRedisplay();
 }
 void Motion(int x, int y) {
-	if (left_clicked == true) {
-
+	if (left_clicked >= 0) {
+		GLfloat ogl_x = ConvertMouseToOpenGLX(x, 800);
+		GLfloat ogl_y = ConvertMouseToOpenGLY(y, 800);
+		rects[left_clicked].move_by_mouse(ogl_x,ogl_y);
 	}
 	glutPostRedisplay();
 }

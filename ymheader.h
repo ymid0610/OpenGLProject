@@ -39,6 +39,14 @@ public:
 		if (px >= x1 && px <= x2 && py >= y1 && py <= y2) return true;
 		else return false;
 	}
+	bool is_rect_inside(const YMRECT& rect) {
+		// 두 사각형이 전혀 겹치지 않는 경우를 먼저 체크
+		if (x2 < rect.x1 || x1 > rect.x2 || y2 < rect.y1 || y1 > rect.y2) {
+			return false;
+		}
+		// 그 외에는 겹침(충돌)
+		return true;
+	}
 	void remake_x1y1x2y2() {
 		x1 = x - size; y1 = y - size; x2 = x + size; y2 = y + size;
 	}
@@ -64,6 +72,7 @@ public:
 		x2 = (x2 > rect.x2) ? x2 : rect.x2;
 		y2 = (y2 > rect.y2) ? y2 : rect.y2;
 		remake_xy_size();
+		random_color();
 	}
 	YMRECT devide_rect() {
 		int random = rand() % 5;
@@ -76,5 +85,9 @@ public:
 		temp.x = x + size; temp.y = y + size; temp.size = size;
 		temp.remake_x1y1x2y2();
 		return temp;
+	}
+	void move_by_mouse(GLfloat dx, GLfloat dy) {
+		x = dx; y = dy;
+		remake_x1y1x2y2();
 	}
 };
