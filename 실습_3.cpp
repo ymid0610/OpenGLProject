@@ -77,6 +77,8 @@ void Motion(int x, int y) {
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'a': {
+		if (rects.size() >= MAX_RECT_COUNT) return;
+		rects.push_back(YMRECT(RandomValue(), RandomValue(), 0.2f));
 		break;
 	}
 	}
