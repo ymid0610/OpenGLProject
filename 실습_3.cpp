@@ -15,6 +15,7 @@ static bool right_clicked;
 
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
+void Keyboard(unsigned char key, int x, int y);
 
 GLfloat ConvertScreenToOpenGLX(int x, int windowWidth);
 GLfloat ConvertScreenToOpenGLY(int y, int windowHeight);
@@ -54,6 +55,10 @@ GLvoid drawScene() //--- 콜백 함수: 출력 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
 	// 그리기 부분 구현: 그리기 관련 부분이 여기에 포함된다.
 
+	for (int i = 0; i < rects.size(); i++) {
+		glColor3f(rects[i].red, rects[i].green, rects[i].blue);
+		glRectf(rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2);
+	}
 
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -77,8 +82,10 @@ void Motion(int x, int y) {
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'a': {
-		if (rects.size() >= MAX_RECT_COUNT) return;
-		rects.push_back(YMRECT(RandomValue(), RandomValue(), 0.2f));
+		std::cout << "a key pressed\n";
+		if (rects.size() >= 10) return;
+		std::cout << "rect 생성\n";
+		rects.push_back(YMRECT(RandomValue(), RandomValue(), 0.1f));
 		break;
 	}
 	}
