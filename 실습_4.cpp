@@ -14,6 +14,7 @@ static bool left_clicked = FALSE;
 
 void Mouse(int button, int state, int x, int y);
 void Keyboard(unsigned char key, int x, int y);
+void TimerFunction(int value);
 
 std::vector<YMRECT> rects;
 
@@ -39,6 +40,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		glutReshapeFunc(Reshape); // 다시 그리기 함수 지정
 		glutKeyboardFunc(Keyboard);
 		glutMouseFunc(Mouse);
+		glutTimerFunc(100, TimerFunction, 1);
 		glutMainLoop(); // 이벤트 처리 시작
 	}
 }
@@ -56,7 +58,12 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 {
 	glViewport(0, 0, w, h);
 }
+void TimerFunction(int value) {
 
+
+	glutPostRedisplay();
+	glutTimerFunc(100, TimerFunction, 1);
+}
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 
