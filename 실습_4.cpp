@@ -66,30 +66,53 @@ void Mouse(int button, int state, int x, int y) {
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case '1': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = CROSS;
+		}
 		break;
 	}
 	case '2': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = ZIGZAG;
+		}
 		break;
 	}
 	case '3': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = SIZECHANGE;
+		}
 		break;
 	}
 	case '4': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = COLORCHANGE;
+		}
 		break;
 	}
 	case '5': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = FOLLOW;
+		}
 		break;
 	}
 	case 's': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = STOP;
+		}
 		break;
 	}
 	case 'm': {
+		for (int i = 0; i < rects.size(); i++) {
+			rects[i].move_type = RESET;
+		}
 		break;
 	}
 	case 'r': {
+		rects.clear();
 		break;
 	}
 	case 'q': {
+		glutLeaveMainLoop();
 		break;
 	}
 	}

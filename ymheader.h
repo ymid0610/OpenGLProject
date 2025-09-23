@@ -16,11 +16,16 @@ GLfloat RandomValue() {
 	return -1.0f + ((rand() % 200) * 0.01f);
 }
 
+enum MOVE { STOP, CROSS, ZIGZAG, SIZECHANGE, COLORCHANGE, FOLLOW, RESET };
+
 class YMRECT {
 public:
 	GLfloat x, y, size;
 	GLfloat red, green, blue;
 	GLfloat x1, y1, x2, y2;
+	int move_type = STOP;
+
+	GLfloat CreatedX, CreatedY;
 
 	YMRECT() {
 		random_color();
