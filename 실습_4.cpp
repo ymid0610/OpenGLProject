@@ -5,6 +5,9 @@
 #include "ymheader.h"
 #include <vector>
 
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 800
+
 #define MAX_RECT_COUNT 30
 
 GLvoid drawScene(GLvoid);
@@ -24,7 +27,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutInit(&argc, argv); // glut 초기화
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); // 디스플레이 모드 설정
 	glutInitWindowPosition(100, 100); // 윈도우의 위치 지정
-	glutInitWindowSize(800, 800); // 윈도우의 크기 지정
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT); // 윈도우의 크기 지정
 	glutCreateWindow("ComputerGraphics"); // 윈도우 생성 (윈도우 이름) 
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
@@ -66,7 +69,7 @@ void TimerFunction(int value) {
 }
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-
+		rects.push_back(YMRECT(ConvertMouseToOpenGLX(x, WINDOW_WIDTH), ConvertMouseToOpenGLY(y, WINDOW_HEIGHT), 0.1f));
 	}
 	glutPostRedisplay();
 }
