@@ -16,7 +16,8 @@ GLfloat RandomValue() {
 	return -1.0f + ((rand() % 200) * 0.01f);
 }
 
-enum MOVE { STOP, CROSS, ZIGZAG, SIZECHANGE, COLORCHANGE, FOLLOW, RESET };
+enum MOVE { STOP, CROSS, ZIGZAG, FOLLOW, RESET };
+enum CHANGE {NOTHING, SIZECHANGE, COLORCHANGE };
 
 class YMRECT {
 public:
@@ -24,7 +25,8 @@ public:
 	GLfloat red, green, blue;
 	GLfloat x1, y1, x2, y2;
 	int move_type = STOP;
-
+	int change_type = NOTHING;
+	float dix = 1, diy = 1, dis = 0;
 	GLfloat CreatedX, CreatedY;
 
 	YMRECT() {
@@ -36,9 +38,17 @@ public:
 		random_color();
 	}
 	void random_color() {
+		std::cout << "random_color\n";
 		red = 0.0f + ((rand() % 100) * 0.01f);
 		green = 0.0f + ((rand() % 100) * 0.01f);
 		blue = 0.0f + ((rand() % 100) * 0.01f);
+	}
+	void random_size() {
+		std::cout << "random_size\n";
+		if (size >= 0.2f) dis = -1;
+		else if (size <= 0.05f) dis = 1;
+		size += dis * 0.01f;
+		remake_x1y1x2y2();
 	}
 	bool is_mouse_inside(GLfloat px, GLfloat py) {
 		if (px >= x1 && px <= x2 && py >= y1 && py <= y2) return true;
@@ -93,6 +103,38 @@ public:
 	}
 	void move_by_mouse(GLfloat dx, GLfloat dy) {
 		x = dx; y = dy;
+		remake_x1y1x2y2();
+	}
+	void move_cross() {
+		std::cout << "move_cross\n";
+		if (x2 >= 1.0f || x1 <= -1.0f) {
+			dix = -dix;
+		}
+		if (y2 >= 1.0f || y1 <= -1.0f) {
+			diy = -diy;
+		}
+		x += dix * 0.02f;
+		y += diy * 0.02f;
+		remake_x1y1x2y2();
+	}
+	void move_zigzag() {
+		std::cout << "move_zigzag\n";
+		if (x2 >= 1.0f || x1 <= -1.0f) {
+			dix = -dix;
+		}
+		if (y2 >= 1.0f || y1 <= -1.0f) {
+			dix = -dix;
+			diy = -diy;
+		}
+		x += dix * 0.02f;
+		y += diy * 0.01f;
+		remake_x1y1x2y2();
+	}
+	void move_follow() {
+		std::cout << "move_follow\n";
+	}
+	void move_reset() {
+		std::cout << "move_reset\n";
 		remake_x1y1x2y2();
 	}
 };
