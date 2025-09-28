@@ -30,6 +30,7 @@ public:
 	GLfloat x1, y1, x2, y2;
 	int move_type = STOP;
 	int change_type = NOTHING;
+	bool eraser = false;
 	float dix = 1, diy = 1, dis = 1;
 	GLfloat CreatedX, CreatedY;
 
