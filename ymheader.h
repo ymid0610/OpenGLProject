@@ -26,7 +26,7 @@ public:
 	GLfloat x1, y1, x2, y2;
 	int move_type = STOP;
 	int change_type = NOTHING;
-	float dix = 1, diy = 1, dis = 0;
+	float dix = 1, diy = 1, dis = 1;
 	GLfloat CreatedX, CreatedY;
 
 	YMRECT() {
@@ -46,7 +46,7 @@ public:
 	void random_size() {
 		std::cout << "random_size\n";
 		if (size >= 0.2f) dis = -1;
-		else if (size <= 0.05f) dis = 1;
+		else if (size <= 0.5f) dis = 1;
 		size += dis * 0.01f;
 		remake_x1y1x2y2();
 	}
