@@ -4,6 +4,10 @@
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 
+struct FLOATXY {
+	GLfloat x, y;
+};
+
 GLfloat ConvertMouseToOpenGLX(int x, int windowWidth) {
 	return (2.0f * x) / windowWidth - 1.0f;
 }
@@ -33,6 +37,7 @@ public:
 		random_color();
 	}
 	YMRECT(float ix, float iy, float isize) {
+		CreatedX = ix; CreatedY = iy;
 		x = ix, y = iy; size = isize;
 		x1 = x - size; y1 = y - size; x2 = x + size; y2 = y + size;
 		random_color();
@@ -46,7 +51,7 @@ public:
 	void random_size() {
 		std::cout << "random_size\n";
 		if (size >= 0.2f) dis = -1;
-		else if (size <= 0.5f) dis = 1;
+		else if (size <= 0.05f) dis = 1;
 		size += dis * 0.01f;
 		remake_x1y1x2y2();
 	}
@@ -130,11 +135,40 @@ public:
 		y += diy * 0.01f;
 		remake_x1y1x2y2();
 	}
-	void move_follow() {
+	FLOATXY move_follow(GLfloat prior_x, GLfloat prior_y, float dix, float diy) {
 		std::cout << "move_follow\n";
+		x = prior_x; y = prior_y;
+		remake_x1y1x2y2();
+		FLOATXY temp;
+		if (dix >= 1.0f && diy >= 1.0f) {
+			temp = { x - size, y - size };
+		}
+		else if (dix <= -1.0f && diy >=1.0f) {
+			temp = { x + size, y - size };
+		}
+		else if (dix >= 1.0f && diy <= -1.0f) {
+			temp = { x - size, y + size };
+		}
+		else if (dix <= -1.0f && diy <= -1.0f) {
+			temp = { x + size, y + size };
+		}
+		return temp;
 	}
 	void move_reset() {
 		std::cout << "move_reset\n";
+		if (x != CreatedX && y != CreatedY) {
+			// 두점사이의 거리공식을 사용하여 원래 위치로 돌아가기
+			float angle = atan2(CreatedY - y, CreatedX - x);
+			x += cos(angle) * 0.02f;
+			y += sin(angle) * 0.02f;
+			if (sqrt((CreatedX - x) * (CreatedX - x) + (CreatedY - y) * (CreatedY - y)) < 0.02f) {
+				x = CreatedX;
+				y = CreatedY;
+			}
+		}
+		else {
+			move_type = STOP;
+		}
 		remake_x1y1x2y2();
 	}
 };

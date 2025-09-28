@@ -66,10 +66,34 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 	glViewport(0, 0, w, h);
 }
 void TimerFunction(int value) {
+	if (rects.size() == 0) {
+		glutPostRedisplay();
+		glutTimerFunc(16, TimerFunction, 1);
+		return;
+	}
+	FLOATXY temp;
+	if (rects[0].dix >= 1.0f && rects[0].diy >= 1.0f) {
+		temp = { rects[0].x - rects[0].size, rects[0].y - rects[0].size };
+	}
+	else if (rects[0].dix <= -1.0f && rects[0].diy >= 1.0f) {
+		temp = { rects[0].x + rects[0].size, rects[0].y - rects[0].size };
+	}
+	else if (rects[0].dix >= 1.0f && rects[0].diy <= -1.0f) {
+		temp = { rects[0].x - rects[0].size, rects[0].y + rects[0].size };
+	}
+	else if (rects[0].dix <= -1.0f && rects[0].diy <= -1.0f) {
+		temp = { rects[0].x + rects[0].size, rects[0].y + rects[0].size };
+	}
 	for (int i = 0; i < rects.size(); i++) {
 		if (rects[i].move_type == CROSS) rects[i].move_cross();
 		else if (rects[i].move_type == ZIGZAG) rects[i].move_zigzag();
-		else if (rects[i].move_type == FOLLOW) rects[i].move_follow();
+		else if (rects[i].move_type == FOLLOW) {
+			if (i == 0) continue;
+			temp = rects[i].move_follow(temp.x, temp.y, rects[i-1].dix, rects[i-1].diy);
+			rects[i].move_type = rects[0].move_type;
+			rects[i].dix = rects[0].dix;
+			rects[i].diy = rects[0].diy;
+		}
 		else if (rects[i].move_type == RESET) rects[i].move_reset();
 		else {
 
@@ -114,7 +138,7 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	}
 	case '5': {
-		for (int i = 0; i < rects.size(); i++) {
+		for (int i = 1; i < rects.size(); i++) {
 			rects[i].move_type = FOLLOW;
 		}
 		break;
