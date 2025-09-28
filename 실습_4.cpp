@@ -8,7 +8,7 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
 
-#define MAX_RECT_COUNT 30
+#define MAX_RECT_COUNT 5
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -82,6 +82,7 @@ void TimerFunction(int value) {
 }
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		if (rects.size() >= MAX_RECT_COUNT) return;
 		rects.push_back(YMRECT(ConvertMouseToOpenGLX(x, WINDOW_WIDTH), ConvertMouseToOpenGLY(y, WINDOW_HEIGHT), 0.1f));
 	}
 	glutPostRedisplay();
