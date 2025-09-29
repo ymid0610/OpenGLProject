@@ -3,6 +3,7 @@
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
+#include <vector>
 
 struct FLOATXY {
 	GLfloat x, y;
@@ -20,8 +21,9 @@ GLfloat RandomValue() {
 	return -1.0f + ((rand() % 200) * 0.01f);
 }
 
-enum MOVE { STOP, CROSS, ZIGZAG, FOLLOW, RESET };
+enum MOVE { STOP, CROSS, ZIGZAG, FOLLOW, RESET};
 enum CHANGE {NOTHING, SIZECHANGE, COLORCHANGE };
+enum DISAPPEAR { NONE, LEFT, RIGHT, UP, DOWN, LEFTUP, RIGHTUP, LEFTDOWN, RIGHTDOWN };
 
 class YMRECT {
 public:
@@ -30,6 +32,7 @@ public:
 	GLfloat x1, y1, x2, y2;
 	int move_type = STOP;
 	int change_type = NOTHING;
+	int disappear_type = NONE;
 	bool eraser = false;
 	float dix = 1, diy = 1, dis = 1;
 	GLfloat CreatedX, CreatedY;
@@ -42,6 +45,12 @@ public:
 		x = ix, y = iy; size = isize;
 		x1 = x - size; y1 = y - size; x2 = x + size; y2 = y + size;
 		random_color();
+	}
+	YMRECT(float ix1, float iy1, float ix2, float iy2, GLfloat ired, GLfloat igreen, GLfloat iblue, int itype) {
+		x1 = ix1; y1 = iy1; x2 = ix2; y2 = iy2;
+		remake_xy_size();
+		red = ired; green = igreen; blue = iblue;
+		disappear_type = itype;
 	}
 	void random_color() {
 		std::cout << "random_color\n";
@@ -170,6 +179,89 @@ public:
 		else {
 			move_type = STOP;
 		}
+		remake_x1y1x2y2();
+	}
+	std::vector<YMRECT> random_animation() {
+		std::vector<YMRECT> new_rects;
+		int random = rand() % 4;
+		if (random == 0) {
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, DOWN));
+			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, UP));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, RIGHT));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFT));
+			
+		}
+		else if (random == 1) {
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, LEFTUP));
+			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, LEFTUP));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, LEFTUP));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFTUP));
+		}
+		else if (random == 2) {
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, LEFT));
+			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, LEFT));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, LEFT));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFT));
+		}
+		else if (random == 3) {
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, DOWN));
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, LEFTDOWN));
+			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, UP));
+			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, RIGHTUP));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, RIGHT));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, RIGHTDOWN));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFT));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFTUP));
+		}
+
+		return new_rects;
+	}
+	void disappear() {
+		size -= 0.001f;
+		remake_x1y1x2y2();
+		if (disappear_type == UP) {
+			disappear_move_up();
+		}
+		else if (disappear_type == DOWN) {
+			disappear_move_down();
+		}
+		else if (disappear_type == LEFT) {
+			disappear_move_left();
+		}
+		else if (disappear_type == RIGHT) {
+			disappear_move_right();
+		}
+		else if (disappear_type == LEFTUP) {
+			disappear_move_left();
+			disappear_move_up();
+		}
+		else if (disappear_type == RIGHTUP) {
+			disappear_move_right();
+			disappear_move_up();
+		}
+		else if (disappear_type == LEFTDOWN) {
+			disappear_move_left();
+			disappear_move_down();
+		}
+		else if (disappear_type == RIGHTDOWN) {
+			disappear_move_right();
+			disappear_move_down();
+		}
+	}
+	void disappear_move_up() {
+		y -= 0.01f;
+		remake_x1y1x2y2();
+	}
+	void disappear_move_down() {
+		y += 0.01f;
+		remake_x1y1x2y2();
+	}
+	void disappear_move_left() {
+		x -= 0.01f;
+		remake_x1y1x2y2();
+	}
+	void disappear_move_right() {
+		x += 0.01f;
 		remake_x1y1x2y2();
 	}
 };

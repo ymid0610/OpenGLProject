@@ -4,6 +4,7 @@
 #include <gl/freeglut_ext.h>
 #include "ymheader.h"
 #include <vector>
+#include <time.h>
 
 #define MAX_RECT_COUNT 5
 
@@ -13,11 +14,13 @@ GLvoid Reshape(int w, int h);
 static int left_clicked = -1;
 
 void Mouse(int button, int state, int x, int y);
+void TimerFunction(int value);
 
 std::vector<YMRECT> rects;
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
+	srand(time(NULL));
 	for (int i = 0; i < MAX_RECT_COUNT; i++) {
 		rects.push_back(YMRECT(RandomValue(), RandomValue(), 0.1f));
 	}
@@ -40,6 +43,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		glutDisplayFunc(drawScene); // 출력 함수의 지정
 		glutReshapeFunc(Reshape); // 다시 그리기 함수 지정
 		glutMouseFunc(Mouse);
+		glutTimerFunc(16, TimerFunction, 1);
 		glutMainLoop(); // 이벤트 처리 시작
 	}
 }
@@ -50,6 +54,7 @@ GLvoid drawScene() //--- 콜백 함수: 출력 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT); // 설정된 색으로 전체를 칠하기
 	// 그리기 부분 구현: 그리기 관련 부분이 여기에 포함된다.
 	for (int i = 0; i < rects.size(); i++) {
+		if (rects[i].size <= 0.0f) continue;
 		glColor3f(rects[i].red, rects[i].green, rects[i].blue);
 		glRectf(rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2);
 	}
@@ -67,10 +72,21 @@ void Mouse(int button, int state, int x, int y) {
 		for (int i = 0; i < rects.size(); i++) {
 			if (rects[i].is_mouse_inside(ogl_x, ogl_y)) {
 				std::cout << i << "번째 rect 클릭됨\n";
-				left_clicked = i;
+				std::vector<YMRECT> new_rects = rects[i].random_animation();
+				rects.erase(rects.begin() + i);
+				rects.insert(rects.end(), new_rects.begin(), new_rects.end());
 				break;
 			}
 		}
 	}
 	glutPostRedisplay();
+}
+void TimerFunction(int value) {
+	for (int i = 0; i < rects.size(); i++) {
+		if (rects[i].disappear_type != NONE) {
+			rects[i].disappear();
+		}
+	}
+	glutPostRedisplay();
+	glutTimerFunc(16, TimerFunction, 1);
 }
