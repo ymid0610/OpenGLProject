@@ -21,6 +21,14 @@ GLfloat RandomValue() {
 	return -1.0f + ((rand() % 200) * 0.01f);
 }
 
+GLfloat RandomHalfValue() {
+	return 0.0f + ((rand() % 100) * 0.01f);
+}
+
+GLfloat RandomSizeValue() {
+	return 0.05f + ((rand() % 150) * 0.001f);
+}
+
 enum MOVE { STOP, CROSS, ZIGZAG, FOLLOW, RESET};
 enum CHANGE {NOTHING, SIZECHANGE, COLORCHANGE };
 enum DISAPPEAR { NONE, LEFT, RIGHT, UP, DOWN, LEFTUP, RIGHTUP, LEFTDOWN, RIGHTDOWN };
@@ -53,7 +61,6 @@ public:
 		disappear_type = itype;
 	}
 	void random_color() {
-		std::cout << "random_color\n";
 		red = 0.0f + ((rand() % 100) * 0.01f);
 		green = 0.0f + ((rand() % 100) * 0.01f);
 		blue = 0.0f + ((rand() % 100) * 0.01f);
@@ -165,7 +172,6 @@ public:
 		return temp;
 	}
 	void move_reset() {
-		std::cout << "move_reset\n";
 		if (x != CreatedX && y != CreatedY) {
 			// 두점사이의 거리공식을 사용하여 원래 위치로 돌아가기
 			float angle = atan2(CreatedY - y, CreatedX - x);
