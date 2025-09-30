@@ -18,9 +18,18 @@
     <ClCompile Include="실습_8.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="실습_9.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="실습_10.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ymshader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GoodFunction.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
