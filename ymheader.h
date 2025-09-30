@@ -198,10 +198,10 @@ public:
 			
 		}
 		else if (random == 1) {
-			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, LEFTUP));
+			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, RIGHTDOWN));
 			new_rects.push_back(YMRECT(x1, y1, x, y, red, green, blue, LEFTUP));
-			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, LEFTUP));
-			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFTUP));
+			new_rects.push_back(YMRECT(x, y1, x2, y, red, green, blue, RIGHTUP));
+			new_rects.push_back(YMRECT(x1, y, x, y2, red, green, blue, LEFTDOWN));
 		}
 		else if (random == 2) {
 			new_rects.push_back(YMRECT(x, y, x2, y2, red, green, blue, LEFT));
