@@ -29,11 +29,286 @@ GLuint shaderProgramID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 
+enum Move_type { STOP, CROSS, ZIGZAG, RECT_SPIROR, CIR_SPIROR};
+
 // 도형 구조체
-struct Triangle {
-    float x, y;
+class Triangle {
+public:
+    float x, y, size;
     std::vector<float> vertices;
     std::vector<float> colors;
+	float dix = 1.0f, diy = -1.0f; // 이동 방향 벡터
+	Move_type move_type;
+
+    // 사각 스파이럴 관련 변수
+    int spiral_phase = 4; // 0:좌, 1:하, 2:우, 3:상
+    float spiral_dist = 2.0f; // 최초 이동 거리
+    float spiral_step = 0.02f; // 한 번에 이동하는 거리
+    float spiral_remain = 2.0f; // 남은 거리
+    float spiral_shrink = 0.2f; // 한 바퀴 돌 때마다 줄어드는 거리
+	bool spiral_in = true; // 안쪽으로 도는지 여부
+
+    // 원 스파이럴 관련 변수
+	float CenterX, CenterY; // 원 스파이럴 중심 좌표
+	float angle = 0.0f; // 현재 각도
+	float radius = 0.0f; // 현재 반지름
+	float angle_step = 5.0f; // 각도 증가량 (도 단위)
+	float radius_step = 0.001f; // 반지름 증가량
+    bool spiral_out = true;
+
+    void move_cross() {
+        // 중심 좌표 이동
+        x += dix * 0.01f;
+        y += diy * 0.01f;
+
+        // x축 벽 충돌 (size 고려)
+        if (x + size > 1.0f || x - size < -1.0f) {
+            dix = -dix;
+            // 벽에 붙이기
+            if (x + size > 1.0f) x = 1.0f - size;
+            if (x - size < -1.0f) x = -1.0f + size;
+        }
+        // y축 벽 충돌 (size 고려)
+        if (y + size * 2 > 1.0f || y - size / 2 < -1.0f) {
+            diy = -diy;
+            // 벽에 붙이기
+            if (y + size * 2 > 1.0f) y = 1.0f - size * 2;
+            if (y - size / 2 < -1.0f) y = -1.0f + size / 2;
+        }
+        // 꼭짓점 재계산
+        remake_vertices();
+    }
+    void move_zigzag() {
+        // 중심 좌표 이동
+        x += dix * 0.01f;
+
+        // x축 벽 판정 (size를 고려)
+        if (x + size > 1.0f || x - size < -1.0f) {
+            dix = -dix; // x 방향 반전
+            // y축으로 한 칸 이동 (size를 고려)
+            float new_y = y + diy * 0.1f;
+            // y축 벽 판정
+            if (new_y + size * 2 > 1.0f || new_y - size / 2 < -1.0f) {
+                diy = -diy; // y 방향 반전
+            }
+            else {
+                y = new_y;
+            }
+        }
+        else {
+            // y축 벽 판정 (x축 벽에 닿지 않았을 때만)
+            if (y + size * 2 > 1.0f) {
+                diy = -1.0f;
+                y -= 0.1f;
+            }
+            if (y - size / 2 < -1.0f) {
+                diy = 1.0f;
+                y += 0.1f;
+            }
+        }
+
+        // 꼭짓점 재계산
+        remake_vertices();
+    }
+    void move_rect_spiror() {
+        if (spiral_phase == 4) { // 초기화
+            spiral_phase = 0; // 좌측 이동부터 시작
+            spiral_dist = 2.0f; // 최초 이동 거리
+            spiral_remain = spiral_dist;
+            size = return_size_from_vertices();
+            spiral_in = true;
+        }
+
+        // 안쪽 다 돌면 바깥쪽으로 전환
+        if (spiral_in && spiral_dist <= 0.0f) {
+            spiral_in = false;
+            spiral_dist = spiral_shrink; // 바깥쪽 시작은 최소 거리부터
+            spiral_remain = spiral_dist;
+        }
+
+        // 바깥쪽으로 돌 때 spiral_dist를 점점 늘림
+        if (!spiral_in && spiral_remain <= 0.0f) {
+            spiral_dist += spiral_shrink; // 바깥쪽으로 돌 때마다 거리 증가
+            spiral_remain = spiral_dist;
+        }
+
+        switch (spiral_phase) {
+        case 0: // 좌측 이동
+            if (spiral_in) {
+                x -= spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 1;
+                    spiral_remain = spiral_dist;
+                }
+                if (x - size < -1.0f) { // 왼쪽 벽 충돌
+                    spiral_phase = 1; // 아래로 방향 전환
+                    spiral_dist = 2.0f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    x = -1.0f + size; // 벽에 맞추기
+                }
+            }
+            else {
+                x -= spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 1;
+                }
+				if (x - size < -1.0f) { // 왼쪽 벽 충돌 시 
+					spiral_in = true; // 다시 안쪽으로 돌기
+					spiral_phase = 1;
+					spiral_dist = 2.0f; // 거리 초기화
+					spiral_remain = spiral_dist;
+					x = -1.0f + size; // 벽에 맞추기
+				}
+            }
+            break;
+        case 1: // 아래 이동
+            if (spiral_in) {
+                y -= spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 2;
+                    spiral_dist -= spiral_shrink; // 거리 줄이기
+                    spiral_remain = spiral_dist;
+                }
+                if (y - size / 2 < -1.0f) { // 아래 벽 충돌
+                    spiral_phase = 2; // 오른쪽으로 방향 전환
+                    spiral_dist = 1.8f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    y = -1.0f + size / 2; // 벽에 맞추기
+                }
+            }
+            else {
+                y -= spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 2;
+                }
+                if (y - size / 2 < -1.0f) { // 아래 벽 충돌 시
+                    spiral_in = true; // 다시 안쪽으로 돌기
+                    spiral_phase = 2;
+                    spiral_dist = 2.0f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    y = -1.0f + size / 2; // 벽에 맞추기
+                }
+            }
+            break;
+        case 2: // 우측 이동
+            if (spiral_in) {
+                x += spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 3;
+                    spiral_remain = spiral_dist;
+                }
+                if (x + size > 1.0f) { // 오른쪽 벽 충돌
+                    spiral_phase = 3; // 위로 방향 전환
+                    spiral_dist = 1.8f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    x = 1.0f - size; // 벽에 맞추기
+                }
+            }
+            else {
+                x += spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 3;
+                }
+				if (x + size > 1.0f) { // 오른쪽 벽 충돌 시
+					spiral_in = true; // 다시 안쪽으로 돌기
+					spiral_phase = 3;
+					spiral_dist = 2.0f; // 거리 초기화
+					spiral_remain = spiral_dist;
+					x = 1.0f - size; // 벽에 맞추기
+				}
+            }
+            break;
+        case 3: // 위 이동
+            if (spiral_in) {
+                y += spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 0;
+                    spiral_dist -= spiral_shrink; // 거리 줄이기
+                    spiral_remain = spiral_dist;
+                }
+                if (y + size * 2 >= 1.0f) { // 위 벽 충돌
+                    spiral_phase = 0; // 왼쪽으로 방향 전환
+                    spiral_dist = 1.6f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    y = 1.0f - size * 2; // 벽에 맞추기
+                }
+            }
+            else {
+                y += spiral_step;
+                spiral_remain -= spiral_step;
+                if (spiral_remain <= 0.0f) {
+                    spiral_phase = 0;
+                }
+                if (y + size * 2 >= 1.0f) { // 위 벽 충돌 시
+                    spiral_in = true; // 다시 안쪽으로 돌기
+                    spiral_phase = 0;
+                    spiral_dist = 2.0f; // 거리 초기화
+                    spiral_remain = spiral_dist;
+                    y = 1.0f - size * 2; // 벽에 맞추기
+                }
+            }
+            break;
+        }
+        // 꼭짓점 재계산
+        vertices = {
+            x - size, y - size / 2, 0.0f,
+            x + size, y - size / 2, 0.0f,
+            x, y + size * 2, 0.0f
+        };
+    }
+    void move_cir_spiror() {
+        if (spiral_out) {
+            x = CenterX + radius * cos(angle * 3.14159f / 180.0f);
+            y = CenterY + radius * sin(angle * 3.14159f / 180.0f);
+            angle += angle_step;
+            radius += radius_step;
+			if (x + size > 1.0f || x - size < -1.0f || y + size * 2 > 1.0f || y - size / 2 < -1.0f) {
+				spiral_out = false;
+			}
+        }
+        else {
+            x = CenterX + radius * cos(angle * 3.14159f / 180.0f);
+            y = CenterY + radius * sin(angle * 3.14159f / 180.0f);
+			angle -= angle_step;
+			radius -= radius_step;
+            if (radius <= 0.0f) {
+                spiral_out = true;
+				angle = 0.0f;
+				radius = 0.0f;
+            }
+        }
+        remake_vertices();
+    }
+    float return_size_from_vertices() const {
+        if (vertices.size() < 6) return 0.0f;
+        // 왼쪽 하단(x1), 오른쪽 하단(x2)
+        float x1 = vertices[0];
+        float x2 = vertices[3];
+        // 밑변 길이 = x2 - x1 = 2 * size
+        return std::abs(x2 - x1) / 2.0f;
+    }
+	void remake_vertices() {
+		vertices = {
+			x - size, y - size / 2, 0.0f,
+			x + size, y - size / 2, 0.0f,
+			x, y + size * 2, 0.0f
+		};
+	}
+    void remake_xy() {
+		x = (vertices[0] + vertices[3]) / 2.0f; // x 좌표는 밑변의 중간
+		y = (vertices[1] + vertices[7]) / 2.0f; // y 좌표는 밑변과 꼭짓점의 중간
+    }
+    void remake_Center() {
+        CenterX = x;
+        CenterY = y;
+    }
 };
 
 // 전역 변수
@@ -80,7 +355,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutKeyboardFunc(Keyboard);
     glutMouseFunc(Mouse);
     glutMotionFunc(Motion);
-    // glutTimerFunc(16, Timer, 0); // 타이머 실행시키고 시작
+    glutTimerFunc(16, Timer, 0); // 타이머 실행시키고 시작
     glutMainLoop();
 }
 GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
@@ -180,7 +455,66 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
         wireframeMode = true;
         std::cout << "선 모드" << std::endl;
     }
-
+    else if (key == '1') {
+		for (auto& tri : triangles1) {
+			tri.move_type = CROSS;
+		}
+        for (auto& tri : triangles2) {
+            tri.move_type = CROSS;
+        }
+		for (auto& tri : triangles3) {
+			tri.move_type = CROSS;
+		}
+        for (auto& tri : triangles4) {
+            tri.move_type = CROSS;
+        }
+    }
+	else if (key == '2') {
+		for (auto& tri : triangles1) {
+			tri.move_type = ZIGZAG;
+		}
+		for (auto& tri : triangles2) {
+			tri.move_type = ZIGZAG;
+		}
+		for (auto& tri : triangles3) {
+			tri.move_type = ZIGZAG;
+		}
+        for (auto& tri : triangles4) {
+            tri.move_type = ZIGZAG;
+        }
+	}
+	else if (key == '3') {
+		for (auto& tri : triangles1) {
+			tri.move_type = RECT_SPIROR;
+		}
+		for (auto& tri : triangles2) {
+			tri.move_type = RECT_SPIROR;
+		}
+		for (auto& tri : triangles3) {
+			tri.move_type = RECT_SPIROR;
+		}
+		for (auto& tri : triangles4) {
+			tri.move_type = RECT_SPIROR;
+		}
+	}
+	else if (key == '4') {
+		for (auto& tri : triangles1) {
+            tri.remake_Center();
+			tri.move_type = CIR_SPIROR;
+		}
+		for (auto& tri : triangles2) {
+			tri.remake_Center();
+			tri.move_type = CIR_SPIROR;
+		}
+		for (auto& tri : triangles3) {
+			tri.remake_Center();
+			tri.move_type = CIR_SPIROR;
+		}
+		for (auto& tri : triangles4) {
+			tri.remake_Center();
+			tri.move_type = CIR_SPIROR;
+		}
+	}
     glutPostRedisplay();
 }
 GLvoid Mouse(int button, int state, int x, int y) {
@@ -240,7 +574,6 @@ GLvoid Mouse(int button, int state, int x, int y) {
         else if (quadrant == 4 && triangles4.size() < 4) {
             CreateTriangleShape(gl_x, gl_y);
         }
-
     }
 
     glutPostRedisplay();
@@ -249,7 +582,48 @@ GLvoid Motion(int x, int y) {
     glutPostRedisplay();
 }
 GLvoid Timer(int value) {
+    for (int i = 0; i < triangles1.size(); i++) {
+		if (triangles1[i].move_type == CROSS)
+			triangles1[i].move_cross();
+		else if (triangles1[i].move_type == ZIGZAG)
+			triangles1[i].move_zigzag();
+		else if (triangles1[i].move_type == RECT_SPIROR)
+            triangles1[i].move_rect_spiror();
+		else if (triangles1[i].move_type == CIR_SPIROR)
+			triangles1[i].move_cir_spiror();
+    }
+	for (int i = 0; i < triangles2.size(); i++) {
+		if (triangles2[i].move_type == CROSS)
+			triangles2[i].move_cross();
+		else if (triangles2[i].move_type == ZIGZAG)
+			triangles2[i].move_zigzag();
+		else if (triangles2[i].move_type == RECT_SPIROR)
+			triangles2[i].move_rect_spiror();
+		else if (triangles2[i].move_type == CIR_SPIROR)
+			triangles2[i].move_cir_spiror();
+	}
+	for (int i = 0; i < triangles3.size(); i++) {
+		if (triangles3[i].move_type == CROSS)
+			triangles3[i].move_cross();
+		else if (triangles3[i].move_type == ZIGZAG)
+			triangles3[i].move_zigzag();
+		else if (triangles3[i].move_type == RECT_SPIROR)
+			triangles3[i].move_rect_spiror();
+		else if (triangles3[i].move_type == CIR_SPIROR)
+			triangles3[i].move_cir_spiror();
+	}
+	for (int i = 0; i < triangles4.size(); i++) {
+		if (triangles4[i].move_type == CROSS)
+			triangles4[i].move_cross();
+		else if (triangles4[i].move_type == ZIGZAG)
+			triangles4[i].move_zigzag();
+		else if (triangles4[i].move_type == RECT_SPIROR)
+			triangles4[i].move_rect_spiror();
+		else if (triangles4[i].move_type == CIR_SPIROR)
+			triangles4[i].move_cir_spiror();
+	}
     glutPostRedisplay();
+    glutTimerFunc(16, Timer, 0);
 }
 
 void CreateTriangleShape(float x, float y) {
@@ -259,6 +633,8 @@ void CreateTriangleShape(float x, float y) {
     std::uniform_real_distribution<double> dis(0.05, 0.1);
     std::uniform_real_distribution<double> col(0.0, 1.0);
     size = dis(gen);
+
+	triangle.size = size;
 
     float rcol = col(gen);
     float gcol = col(gen);

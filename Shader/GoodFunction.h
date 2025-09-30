@@ -23,3 +23,4 @@ int CheckQuadrant(float x, float y) {
     else if (x < 0.0 && y < 0.0) return 3; // 3사분면
     else return 4; // 4사분면  
 }
+
