@@ -53,6 +53,7 @@ class SPIROR {
 public:
 	float CenterX1, CenterY1; // 원 스파이럴 중심 좌표1
 	float CenterX2, CenterY2; // 원 스파이럴 중심 좌표2
+	bool reverse = false; // 반시계 방향 여부
     float x, y;
 	float angle = 0.0f; // 현재 각도
 	float radius = 0.0f; // 현재 반지름
@@ -91,6 +92,40 @@ public:
 			y = CenterY2 - radius * sin(angle * 3.14159 / 180.0f);
 			angle -= angle_step;
 			radius -= radius_step;
+        }
+
+        points.push_back(x);
+        points.push_back(y);
+        points.push_back(0.0f);
+    }
+    void move_Rspiror() {
+
+        if (direction == 0) {
+
+            if (angle <= -720.0f) {
+                direction = 1;
+                return;
+            }
+
+            x = CenterX1 + radius * cos(angle * 3.14159 / 180.0f);
+            y = CenterY1 + radius * sin(angle * 3.14159 / 180.0f);
+            angle -= angle_step;
+            radius += radius_step;
+
+        }
+        else if (direction == 1) {
+
+            if (angle >= 0.0f) {
+                direction = 2;
+                angle = 180.0f;
+                spiral_done = true;
+                return;
+            }
+
+            x = CenterX2 - radius * cos(angle * 3.14159 / 180.0f);
+            y = CenterY2 - radius * sin(angle * 3.14159 / 180.0f);
+            angle += angle_step;
+            radius -= radius_step;
         }
 
         points.push_back(x);
@@ -197,7 +232,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
     else if (key == '1') {
         float sp_x = loc(gen);
         float sp_y = loc(gen);
-        spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y });
+        spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y, true });
     }
 	else if (key == '2') {
 		for (int i = 0; i < 2; i++) {
@@ -210,7 +245,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 3; i++) {
 			float sp_x = loc(gen);
 			float sp_y = loc(gen);
-			spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y });
+			spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y, true });
 		}
 	}
 	else if (key == '4') {
@@ -224,7 +259,7 @@ GLvoid Keyboard(unsigned char key, int x, int y) {
 		for (int i = 0; i < 5; i++) {
 			float sp_x = loc(gen);
 			float sp_y = loc(gen);
-			spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y });
+			spirors.push_back(SPIROR{ sp_x, sp_y, sp_x + 0.288f, sp_y, true});
 		}
 	}
     else {
@@ -271,7 +306,10 @@ GLvoid Timer(int value) {
 
 	for (auto& spiror : spirors) {
 		if (spiror.spiral_done) continue;
-        spiror.move_spiror();
+		if (spiror.reverse)
+			spiror.move_Rspiror();
+		else
+            spiror.move_spiror();
         CreateTriangleShape(spiror.x, spiror.y);
 	}
     glutPostRedisplay();
