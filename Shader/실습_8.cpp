@@ -7,6 +7,8 @@
 #include <vector>
 #include "ymshader.h"
 
+#define MAX_OBJECT 10
+
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
 void Keyboard(unsigned char key, int x, int y);
@@ -27,7 +29,11 @@ GLuint shaderProgramID; //--- 셰이더 프로그램
 
 std::vector<VERTEX> Vertexs;
 std::vector<unsigned int> List;
+std::vector<OBJECT> Objects;
 int v_count = 0; // 정점 개수
+
+static int shape = ZUM;
+int selected = -1; // 선택된 도형 인덱스
 
 void main(int argc, char** argv)
 {
@@ -58,13 +64,30 @@ GLvoid drawScene()
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(VAO);
 
-	//glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, List.size(), GL_UNSIGNED_INT, 0);
 
 	glutSwapBuffers();
 }
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-
+		float cx = ConvertMouseToOGL_x(x, glutGet(GLUT_WINDOW_WIDTH));
+		float cy = ConvertMouseToOGL_y(y, glutGet(GLUT_WINDOW_HEIGHT));
+		if (Objects.size() >= MAX_OBJECT) return;
+		AddShape(cx, cy, (SHAPE)shape);
+		InitBuffer();
+	}
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+		float cx = ConvertMouseToOGL_x(x, glutGet(GLUT_WINDOW_WIDTH));
+		float cy = ConvertMouseToOGL_y(y, glutGet(GLUT_WINDOW_HEIGHT));
+		float minDist = 100.0f;
+		selected = -1;
+		for (int i = 0; i < Objects.size(); ++i) {
+			int vi = List[Objects[i].start_idx];
+			float dx = Vertexs[vi].x - cx;
+			float dy = Vertexs[vi].y - cy;
+			float dist = dx * dx + dy * dy;
+			if (dist < minDist) { minDist = dist; selected = i; }
+		}
 	}
 	glutPostRedisplay();
 }
@@ -74,10 +97,40 @@ void Motion(int x, int y) {
 }
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-	case 'q': {
-
+	case 'p': shape = ZUM; break;
+	case 'l': shape = LINE; break;
+	case 't': shape = TRIANGLE; break;
+	case 'r': shape = RECTANGLE; break;
+	case 'c': Vertexs.clear(); List.clear(); Objects.clear(); v_count = 0; selected = -1; InitBuffer(); break;
+	case 'w': // 위
+		if (selected != -1) MoveObject(selected, 0.0f, 0.05f);
+		break;
+	case 'a': // 좌
+		if (selected != -1) MoveObject(selected, -0.05f, 0.0f);
+		break;
+	case 's': // 아래
+		if (selected != -1) MoveObject(selected, 0.0f, -0.05f);
+		break;
+	case 'd': // 우
+		if (selected != -1) MoveObject(selected, 0.05f, 0.0f);
+		break;
+	case 'j': // 좌상
+		if (selected != -1) MoveObject(selected, -0.05f, 0.05f);
+		break;
+	case 'k': // 우상
+		if (selected != -1) MoveObject(selected, 0.05f, 0.05f);
+		break;
+	case 'n': // 좌하
+		if (selected != -1) MoveObject(selected, -0.05f, -0.05f);
+		break;
+	case 'm': // 우하
+		if (selected != -1) MoveObject(selected, 0.05f, -0.05f);
+		break;
+	case 'D': 
+		PrintObjectInfo(selected);
+		break;
 	}
-	}
+	InitBuffer();
 	glutPostRedisplay();
 }
 void TimerFunction(int value) {
