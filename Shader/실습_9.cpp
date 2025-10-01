@@ -375,56 +375,51 @@ GLvoid Mouse(int button, int state, int x, int y) {
 
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         if (quadrant == 1) { // 1사분면
-            if (triangles1.size() < 4) {
-                CreateTriangleShape(gl_x, gl_y);
-            }
-            else if (triangles1.size() == 4) {
-                triangles1.erase(triangles1.begin());
-                CreateTriangleShape(gl_x, gl_y);
-            }
+            triangles1.clear();
+            CreateTriangleShape(gl_x, gl_y);
         }
         else if (quadrant == 2) {
-            if (triangles2.size() < 4) {
-                CreateTriangleShape(gl_x, gl_y);
-            }
-            else if (triangles2.size() == 4) {
-                triangles2.erase(triangles2.begin());
-                CreateTriangleShape(gl_x, gl_y);
-            }
+			triangles2.clear();
+            CreateTriangleShape(gl_x, gl_y);
         }
         else if (quadrant == 3) {
-            if (triangles3.size() < 4) {
-                CreateTriangleShape(gl_x, gl_y);
-            }
-            else if (triangles3.size() == 4) {
-                triangles3.erase(triangles3.begin());
-                CreateTriangleShape(gl_x, gl_y);
-            }
+			triangles3.clear();
+            CreateTriangleShape(gl_x, gl_y);
         }
         else if (quadrant == 4) {
-            if (triangles4.size() < 4) {
-                CreateTriangleShape(gl_x, gl_y);
-            }
-            else if (triangles4.size() == 4) {
-                triangles4.erase(triangles4.begin());
-                CreateTriangleShape(gl_x, gl_y);
-            }
+			triangles4.clear();
+            CreateTriangleShape(gl_x, gl_y);
         }
     }
     else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
         if (quadrant == 1 && triangles1.size() < 4) { // 1사분면
             CreateTriangleShape(gl_x, gl_y);
         }
+        else if (quadrant == 1 && triangles1.size() == 4) {
+            triangles1.erase(triangles1.begin());
+            CreateTriangleShape(gl_x, gl_y);
+        }
         else if (quadrant == 2 && triangles2.size() < 4) {
             CreateTriangleShape(gl_x, gl_y);
         }
+		else if (quadrant == 2 && triangles2.size() == 4) {
+			triangles2.erase(triangles2.begin());
+            CreateTriangleShape(gl_x, gl_y);
+		}
         else if (quadrant == 3 && triangles3.size() < 4) {
             CreateTriangleShape(gl_x, gl_y);
         }
+		else if (quadrant == 3 && triangles3.size() == 4) {
+			triangles3.erase(triangles3.begin());
+            CreateTriangleShape(gl_x, gl_y);
+		}
         else if (quadrant == 4 && triangles4.size() < 4) {
             CreateTriangleShape(gl_x, gl_y);
         }
-
+        else if (quadrant == 4 && triangles4.size() == 4) {
+            triangles4.erase(triangles4.begin());
+            CreateTriangleShape(gl_x, gl_y);
+        }
     }
 
     glutPostRedisplay();

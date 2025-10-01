@@ -284,7 +284,7 @@ public:
 				radius = 0.0f;
             }
         }
-        remake_vertices();
+        remake_vertices_angle(angle);
     }
     float return_size_from_vertices() const {
         if (vertices.size() < 6) return 0.0f;
@@ -293,6 +293,13 @@ public:
         float x2 = vertices[3];
         // ¹Øº¯ ±æÀÌ = x2 - x1 = 2 * size
         return std::abs(x2 - x1) / 2.0f;
+    }
+    void remake_vertices_angle(float angle) {
+        vertices = {
+            x + size * cos((angle + 210.0f) * 3.14159f / 180.0f), y + size * sin((angle + 210.0f) * 3.14159f / 180.0f), 0.0f,
+            x + size * cos((angle + 330.0f) * 3.14159f / 180.0f), y + size * sin((angle + 330.0f) * 3.14159f / 180.0f), 0.0f,
+            x + size * cos((angle + 90.0f) * 3.14159f / 180.0f), y + size * sin((angle + 90.0f) * 3.14159f / 180.0f), 0.0f,
+        };
     }
 	void remake_vertices() {
 		vertices = {
