@@ -38,7 +38,19 @@ struct Shape {
 	ShapeType type;
 };
 
+struct ExtraShape {
+	std::vector<VERTEX> verts[4]; // 0:Line, 1:Triangle, 2:Rect, 3:Penta
+	std::vector<unsigned int> indices[4];
+	ShapeType type;
+	int idx; // 0:Line, 1:Triangle, 2:Rect, 3:Penta
+};
+
 Shape shapes[4];
+
+ExtraShape extrashapes[4]; // 0:좌상, 1:우상, 2:좌하, 3:우하
+
+ShapeType nextShape[4] = { TRIANGLE, RECTANGLE, PENTAGON, LINE };
+bool animating[4] = { false, false, false, false };
 
 std::vector<VERTEX> finalVertex;
 std::vector<unsigned int> final_indices;
@@ -47,14 +59,10 @@ bool flag_line = false;
 bool flag_rect = false;
 bool flag_tri = false;
 bool flag_penta = false;
+bool flag_a = false;
 
 void InitShapes() {
 	shapes[0].type = TRIANGLE;
-
-	//shapes[1].type = TRIANGLE;
-	//shapes[2].type = LINE;
-	//shapes[3].type = RECTANGLE;
-	//shapes[4].type = PENTAGON;
 
 	std::vector<VERTEX> temp;
 	GLfloat x, y, size;
@@ -90,6 +98,45 @@ void InitShapes() {
 
 }
 
+void ExtraShapes() {
+	// 각 사분면의 중심 좌표
+	float cx[4] = { -0.5f, 0.5f, -0.5f, 0.5f };
+	float cy[4] = { 0.5f, 0.5f, -0.5f, -0.5f };
+	float size = 0.3f;
+
+	for (int i = 0; i < 4; ++i) {
+		extrashapes[i].verts[0] = CreateLine(cx[0] - 0.15f, cy[0] + 0.15f, cx[0] + 0.15f, cy[0] - 0.15f);      // Line
+		extrashapes[i].verts[1] = CreateTriangle(cx[i], cy[i], size);  // Triangle
+		extrashapes[i].verts[2] = CreateRectangle(cx[i], cy[i], size); // Rect
+		extrashapes[i].verts[3] = CreatePentagon(cx[i], cy[i], size);  // Penta
+
+		// 인덱스 생성 (각 도형에 맞게)
+		extrashapes[i].indices[0] = { 0, 1 }; // Line
+		extrashapes[i].indices[1].clear();
+		for (int j = 1; j <= 3; ++j) { // Triangle
+			extrashapes[i].indices[1].push_back(0);
+			extrashapes[i].indices[1].push_back(j);
+			extrashapes[i].indices[1].push_back((j % 3) + 1);
+		}
+		extrashapes[i].indices[2].clear();
+		for (int j = 1; j <= 4; ++j) { // Rect (2 triangles)
+			extrashapes[i].indices[2].push_back(0);
+			extrashapes[i].indices[2].push_back(j);
+			extrashapes[i].indices[2].push_back((j % 4) + 1);
+		}
+		extrashapes[i].indices[3].clear();
+		for (int j = 1; j <= 5; ++j) { // Penta (5 triangles)
+			extrashapes[i].indices[3].push_back(0);
+			extrashapes[i].indices[3].push_back(j);
+			extrashapes[i].indices[3].push_back((j % 5) + 1);
+		}
+
+		extrashapes[i].type = (ShapeType)i;
+		extrashapes[i].idx = i;
+		animating[i] = false;
+	}
+}
+
 void main(int argc, char** argv)
 {
 	InitShapes();
@@ -118,21 +165,41 @@ GLvoid drawScene()
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	InitBuffer();
+	if (flag_a) {
+		glUseProgram(shaderProgramID);
 
-	glUseProgram(shaderProgramID);
-	glBindVertexArray(VAO);
+		for (int i = 0; i < 4; ++i) {
+			glBindVertexArray(VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(VERTEX) * extrashapes[i].verts[extrashapes[i].idx].size(), extrashapes[i].verts[extrashapes[i].idx].data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * extrashapes[i].indices[extrashapes[i].idx].size(), extrashapes[i].indices[extrashapes[i].idx].data(), GL_STATIC_DRAW);
 
-	if (shapes[0].type == LINE && !flag_line) {
-		glBegin(GL_LINES);
-		glVertex3f(shapes[0].TriVertexs[1].x, shapes[0].TriVertexs[1].y, 0.0f);
-		glVertex3f(shapes[0].TriVertexs[2].x, shapes[0].TriVertexs[2].y, 0.0f);
-		glEnd();
+			if (extrashapes[i].type == LINE) {
+				glDrawArrays(GL_LINES, 0, 2);
+			}
+			else {
+				glDrawElements(GL_TRIANGLES, extrashapes[i].indices[extrashapes[i].idx].size(), GL_UNSIGNED_INT, 0);
+			}
+		}
+		glutSwapBuffers();
 	}
 	else {
-		glDrawElements(GL_TRIANGLES, final_indices.size(), GL_UNSIGNED_INT, 0);
+		InitBuffer();
+		glUseProgram(shaderProgramID);
+		glBindVertexArray(VAO);
+
+		if (shapes[0].type == LINE && !flag_line) {
+			glBegin(GL_LINES);
+			glVertex3f(shapes[0].TriVertexs[1].x, shapes[0].TriVertexs[1].y, 0.0f);
+			glVertex3f(shapes[0].TriVertexs[2].x, shapes[0].TriVertexs[2].y, 0.0f);
+			glEnd();
+		}
+		else {
+			glDrawElements(GL_TRIANGLES, final_indices.size(), GL_UNSIGNED_INT, 0);
+		}
+		glutSwapBuffers();
 	}
-	glutSwapBuffers();
 }
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
@@ -147,6 +214,16 @@ void Motion(int x, int y) {
 
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
+	case 'a': {
+		flag_a = !flag_a;
+		if (flag_a) {
+			ExtraShapes();
+		}
+		else {
+			InitShapes();
+		}
+		break;
+	}
 	case 'l': {
 		flag_line = true;
 		break;
@@ -168,21 +245,41 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void TimerFunction(int value) {
-	if (flag_line && shapes[0].type == LINE) {
-		if (isCorrectMoved(shapes[0].TriVertexs, finalVertex)) {
-			shapes[0].type = TRIANGLE;
-			flag_line = false;
-		}
-		else {
-			std::vector<VERTEX> temp;
-			temp = Move_Vertex(shapes[0].TriVertexs, finalVertex);
-			finalVertex.clear();
-			for (int i = 0; i < temp.size(); i++) {
-				finalVertex.push_back(temp[i]);
+	if (flag_a) {
+		for (int i = 0; i < 4; ++i) {
+			if (animating[i]) {
+				std::vector<VERTEX> temp;
+				temp = Move_Vertex(extrashapes[i].verts[extrashapes[i].idx], extrashapes[i].verts[nextShape[extrashapes[i].idx]]);
+				extrashapes[i].verts[extrashapes[i].idx].clear();
+				for (int j = 0; j < temp.size(); j++) {
+					extrashapes[i].verts[extrashapes[i].idx].push_back(temp[j]);
+				}
+				if (isCorrectMoved(extrashapes[i].verts[extrashapes[i].idx], extrashapes[i].verts[nextShape[extrashapes[i].idx]])) {
+					extrashapes[i].idx = nextShape[extrashapes[i].idx];
+					animating[i] = false;
+				}
 			}
 		}
+		glutPostRedisplay();
+		glutTimerFunc(16, TimerFunction, 1);
+		return;
 	}
-	else if (flag_tri && shapes[0].type == TRIANGLE) {
+	else {
+		if (flag_line && shapes[0].type == LINE) {
+			if (isCorrectMoved(shapes[0].TriVertexs, finalVertex)) {
+				shapes[0].type = TRIANGLE;
+				flag_line = false;
+			}
+			else {
+				std::vector<VERTEX> temp;
+				temp = Move_Vertex(shapes[0].TriVertexs, finalVertex);
+				finalVertex.clear();
+				for (int i = 0; i < temp.size(); i++) {
+					finalVertex.push_back(temp[i]);
+				}
+			}
+		}
+		else if (flag_tri && shapes[0].type == TRIANGLE) {
 			if (isCorrectMoved(shapes[0].RectVertexs, finalVertex)) {
 				shapes[0].type = RECTANGLE;
 				flag_tri = false;
@@ -195,43 +292,44 @@ void TimerFunction(int value) {
 					finalVertex.push_back(temp[i]);
 				}
 			}
-	}
-	else if (flag_rect && shapes[0].type == RECTANGLE) {
-		if (isCorrectMoved(shapes[0].PentaVertexs, finalVertex)) {
-			shapes[0].type = PENTAGON;
-			flag_rect = false;
 		}
-		else {
-			std::vector<VERTEX> temp;
-			temp = Move_Vertex(shapes[0].PentaVertexs, finalVertex);
-			finalVertex.clear();
-			for (int i = 0; i < temp.size(); i++) {
-				finalVertex.push_back(temp[i]);
+		else if (flag_rect && shapes[0].type == RECTANGLE) {
+			if (isCorrectMoved(shapes[0].PentaVertexs, finalVertex)) {
+				shapes[0].type = PENTAGON;
+				flag_rect = false;
+			}
+			else {
+				std::vector<VERTEX> temp;
+				temp = Move_Vertex(shapes[0].PentaVertexs, finalVertex);
+				finalVertex.clear();
+				for (int i = 0; i < temp.size(); i++) {
+					finalVertex.push_back(temp[i]);
+				}
 			}
 		}
-	}
-	else if (flag_penta && shapes[0].type == PENTAGON) {
-		if (isCorrectMoved(shapes[0].LineVertexs, finalVertex)) {
-			shapes[0].type = LINE;
+		else if (flag_penta && shapes[0].type == PENTAGON) {
+			if (isCorrectMoved(shapes[0].LineVertexs, finalVertex)) {
+				shapes[0].type = LINE;
+				flag_penta = false;
+			}
+			else {
+				std::vector<VERTEX> temp;
+				temp = Move_LineVertex(shapes[0].LineVertexs, finalVertex);
+				finalVertex.clear();
+				for (int i = 0; i < temp.size(); i++) {
+					finalVertex.push_back(temp[i]);
+				}
+			}
+		}
+		else {
+			flag_line = false;
+			flag_rect = false;
+			flag_tri = false;
 			flag_penta = false;
 		}
-		else {
-			std::vector<VERTEX> temp;
-			temp = Move_LineVertex(shapes[0].LineVertexs, finalVertex);
-			finalVertex.clear();
-			for (int i = 0; i < temp.size(); i++) {
-				finalVertex.push_back(temp[i]);
-			}
-		}
+		glutPostRedisplay();
+		glutTimerFunc(16, TimerFunction, 1);
 	}
-	else {
-		flag_line = false;
-		flag_rect = false;
-		flag_tri = false;
-		flag_penta = false;
-	}
-	glutPostRedisplay();
-	glutTimerFunc(16, TimerFunction, 1);
 }
 
 GLvoid Reshape(int w, int h)
