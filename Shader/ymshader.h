@@ -29,6 +29,14 @@ void RandomColor() {
 	green = rand() % 100 / 100.0f;
 	blue = rand() % 100 / 100.0f;
 }
+std::vector<VERTEX> CreateLine(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {
+	std::vector<VERTEX> TEMP;
+	RandomColor();
+	TEMP.push_back({ (x1 + x2) / 2, (y1 + y2) / 2, 0.0f, red, green, blue, v_count++ });
+	TEMP.push_back({ x1, y1, 0.0f, red, green, blue, v_count++ });
+	TEMP.push_back({ x2, y2, 0.0f, red, green, blue, v_count++ });
+	return TEMP;
+}
 std::vector<VERTEX> CreateTriangle(GLfloat x, GLfloat y, float size) {
 	std::vector<VERTEX> TEMP;
 	RandomColor();
@@ -79,6 +87,29 @@ std::vector<VERTEX> Move_Vertex(std::vector<VERTEX> vertex1, std::vector<VERTEX>
 		}
 		if (vertex1[i].y != vertex2[i].y) {
 			vertex2[i].y += (vertex1[i].y - vertex2[i].y) / 100;
+		}
+	}
+	return vertex2;
+}
+std::vector<VERTEX> Move_LineVertex(std::vector<VERTEX> vertex1, std::vector<VERTEX> vertex2) {
+	
+	vertex2[0].x += ((vertex1[1].x + vertex1[2].x) / 2 - vertex2[0].x) / 100;
+	vertex2[0].y += ((vertex1[1].y + vertex1[2].y) / 2 - vertex2[0].y) / 100;
+
+	for (int i = 1; i < vertex2.size(); i+=2) {
+		if (vertex1[1].x != vertex2[i].x) {
+			vertex2[i].x += (vertex1[1].x - vertex2[i].x) / 100;
+		}
+		if (vertex1[1].y != vertex2[i].y) {
+			vertex2[i].y += (vertex1[1].y - vertex2[i].y) / 100;
+		}
+	}
+	for (int i = 2; i < vertex2.size(); i += 2) {
+		if (vertex1[2].x != vertex2[i].x) {
+			vertex2[i].x += (vertex1[2].x - vertex2[i].x) / 100;
+		}
+		if (vertex1[2].y != vertex2[i].y) {
+			vertex2[i].y += (vertex1[2].y - vertex2[i].y) / 100;
 		}
 	}
 	return vertex2;

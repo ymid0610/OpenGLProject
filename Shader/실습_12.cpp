@@ -25,49 +25,74 @@ GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
 GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID; //--- 셰이더 프로그램
 
-std::vector<VERTEX> LineVertexs;
-std::vector<VERTEX> TriVertexs;
-std::vector<VERTEX> RectVertexs;
-std::vector<VERTEX> PentaVertexs;
-std::vector<VERTEX> MainVertexs;
-
-std::vector<unsigned int> Lists;
 
 int v_count = 0; // 정점 개수
+
+enum ShapeType { LINE, TRIANGLE, RECTANGLE, PENTAGON };
+struct Shape {
+	std::vector<VERTEX> LineVertexs;
+	std::vector<VERTEX> TriVertexs;
+	std::vector<VERTEX> RectVertexs;
+	std::vector<VERTEX> PentaVertexs;
+	std::vector<unsigned int> indices;
+	ShapeType type;
+};
+
+Shape shapes[4];
+
+std::vector<VERTEX> finalVertex;
+std::vector<unsigned int> final_indices;
 
 bool flag_line = false;
 bool flag_rect = false;
 bool flag_tri = false;
 bool flag_penta = false;
 
-void main(int argc, char** argv)
-{
+void InitShapes() {
+	shapes[0].type = TRIANGLE;
+
+	//shapes[1].type = TRIANGLE;
+	//shapes[2].type = LINE;
+	//shapes[3].type = RECTANGLE;
+	//shapes[4].type = PENTAGON;
+
 	std::vector<VERTEX> temp;
-	temp = CreateTriangle(0.5f, 0.5f, 0.2f);
+	GLfloat x, y, size;
+	x = 0.0f, y = 0.0f, size = 0.2f;
+
+	temp = CreateTriangle(x, y, 2 * size);
 	for (int i = 0; i < temp.size(); i++) {
-		MainVertexs.push_back(temp[i]);
+		finalVertex.push_back(temp[i]);
 	}
 	for (int i = 1; i <= 5; ++i) {
-		Lists.push_back(temp[0].id);           // 0
-		Lists.push_back(temp[i].id);           // 1,2,3,4,5
-		Lists.push_back(temp[(i % 5) + 1].id); // 2,3,4,5,1
-	}
-	for (int i = 0; i < temp.size(); i++) {
-		TriVertexs.push_back(temp[i]);
+		final_indices.push_back(temp[0].id);           // 0
+		final_indices.push_back(temp[i].id);           // 1,2,3,4,5
+		final_indices.push_back(temp[(i % 5) + 1].id); // 2,3,4,5,1
 	}
 
-	temp = CreateTriangle(0.5f, 0.5f, 0.4f);
+	// init shape	
+	temp = CreateTriangle(x, y, 2 * size);
 	for (int i = 0; i < temp.size(); i++) {
-		TriVertexs.push_back(temp[i]);
+		shapes[0].TriVertexs.push_back(temp[i]);
 	}
-	temp = CreateRectangle(0.5f, 0.5f, 0.4f);
+	temp = CreateLine(shapes[0].TriVertexs[1].x, shapes[0].TriVertexs[1].y, shapes[0].TriVertexs[2].x, shapes[0].TriVertexs[2].y);
 	for (int i = 0; i < temp.size(); i++) {
-		RectVertexs.push_back(temp[i]);
+		shapes[0].LineVertexs.push_back(temp[i]);
 	}
-	temp = CreatePentagon(0.5f, 0.5f, 0.2f);
+	temp = CreateRectangle(x, y, 2 * size);
 	for (int i = 0; i < temp.size(); i++) {
-		PentaVertexs.push_back(temp[i]);
+		shapes[0].RectVertexs.push_back(temp[i]);
 	}
+	temp = CreatePentagon(x, y, size);
+	for (int i = 0; i < temp.size(); i++) {
+		shapes[0].PentaVertexs.push_back(temp[i]);
+	}
+
+}
+
+void main(int argc, char** argv)
+{
+	InitShapes();
 
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
@@ -98,15 +123,15 @@ GLvoid drawScene()
 	glUseProgram(shaderProgramID);
 	glBindVertexArray(VAO);
 
-
-	glBegin(GL_LINES);
-	glVertex3f(0.25f, 0.25f,0.0f);    // 첫 번째 점
-	glVertex3f(0.75f, 0.75f, 0.0f);    // 두 번째 점
-
-	glEnd();
-
-	glDrawElements(GL_TRIANGLES, Lists.size(), GL_UNSIGNED_INT, 0);
-
+	if (shapes[0].type == LINE && !flag_line) {
+		glBegin(GL_LINES);
+		glVertex3f(shapes[0].TriVertexs[1].x, shapes[0].TriVertexs[1].y, 0.0f);
+		glVertex3f(shapes[0].TriVertexs[2].x, shapes[0].TriVertexs[2].y, 0.0f);
+		glEnd();
+	}
+	else {
+		glDrawElements(GL_TRIANGLES, final_indices.size(), GL_UNSIGNED_INT, 0);
+	}
 	glutSwapBuffers();
 }
 void Mouse(int button, int state, int x, int y) {
@@ -122,6 +147,10 @@ void Motion(int x, int y) {
 
 void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
+	case 'l': {
+		flag_line = true;
+		break;
+	}
 	case 'r': {
 		flag_rect = true;
 		break;
@@ -130,36 +159,76 @@ void Keyboard(unsigned char key, int x, int y) {
 		flag_tri = true;
 		break;
 	}
+	case 'p': {
+		flag_penta = true;
+		break;
+	}
 	}
 	glutPostRedisplay();
 }
 
 void TimerFunction(int value) {
-	if (flag_rect) {
-		if (isCorrectMoved(PentaVertexs, MainVertexs)) {
+	if (flag_line && shapes[0].type == LINE) {
+		if (isCorrectMoved(shapes[0].TriVertexs, finalVertex)) {
+			shapes[0].type = TRIANGLE;
+			flag_line = false;
+		}
+		else {
+			std::vector<VERTEX> temp;
+			temp = Move_Vertex(shapes[0].TriVertexs, finalVertex);
+			finalVertex.clear();
+			for (int i = 0; i < temp.size(); i++) {
+				finalVertex.push_back(temp[i]);
+			}
+		}
+	}
+	else if (flag_tri && shapes[0].type == TRIANGLE) {
+			if (isCorrectMoved(shapes[0].RectVertexs, finalVertex)) {
+				shapes[0].type = RECTANGLE;
+				flag_tri = false;
+			}
+			else {
+				std::vector<VERTEX> temp;
+				temp = Move_Vertex(shapes[0].RectVertexs, finalVertex);
+				finalVertex.clear();
+				for (int i = 0; i < temp.size(); i++) {
+					finalVertex.push_back(temp[i]);
+				}
+			}
+	}
+	else if (flag_rect && shapes[0].type == RECTANGLE) {
+		if (isCorrectMoved(shapes[0].PentaVertexs, finalVertex)) {
+			shapes[0].type = PENTAGON;
 			flag_rect = false;
 		}
 		else {
 			std::vector<VERTEX> temp;
-			temp = Move_Vertex(PentaVertexs, MainVertexs);
-			MainVertexs.clear();
+			temp = Move_Vertex(shapes[0].PentaVertexs, finalVertex);
+			finalVertex.clear();
 			for (int i = 0; i < temp.size(); i++) {
-				MainVertexs.push_back(temp[i]);
+				finalVertex.push_back(temp[i]);
 			}
 		}
 	}
-	else if (flag_tri) {
-		if (isCorrectMoved(RectVertexs, MainVertexs)) {
-			flag_tri = false;
+	else if (flag_penta && shapes[0].type == PENTAGON) {
+		if (isCorrectMoved(shapes[0].LineVertexs, finalVertex)) {
+			shapes[0].type = LINE;
+			flag_penta = false;
 		}
 		else {
 			std::vector<VERTEX> temp;
-			temp = Move_Vertex(RectVertexs, MainVertexs);
-			MainVertexs.clear();
+			temp = Move_LineVertex(shapes[0].LineVertexs, finalVertex);
+			finalVertex.clear();
 			for (int i = 0; i < temp.size(); i++) {
-				MainVertexs.push_back(temp[i]);
+				finalVertex.push_back(temp[i]);
 			}
 		}
+	}
+	else {
+		flag_line = false;
+		flag_rect = false;
+		flag_tri = false;
+		flag_penta = false;
 	}
 	glutPostRedisplay();
 	glutTimerFunc(16, TimerFunction, 1);
@@ -177,10 +246,10 @@ void InitBuffer()
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_pos);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(VERTEX) * MainVertexs.size(), MainVertexs.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VERTEX) * finalVertex.size(), finalVertex.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * Lists.size(), Lists.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * final_indices.size(), final_indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VERTEX), 0);
 	glEnableVertexAttribArray(0);
