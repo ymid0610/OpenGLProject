@@ -44,6 +44,9 @@
     <ClInclude Include="GoodFunction.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="readobj.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertex.glsl">
