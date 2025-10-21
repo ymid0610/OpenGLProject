@@ -79,14 +79,20 @@ GLfloat cubeColors[6][3] = {
 GLfloat cubeFaceVertices[36][3];
 GLfloat cubeFaceColors[36][3];
 
-// 각 면의 삼각형 인덱스 (정점 인덱스)
+// 각 면의 삼각형 인덱스 (정점 인덱스, 반드시 반시계 방향으로!)
 int faceTriIdx[6][6] = {
-    {0,1,2, 0,2,3}, // 뒤
-    {4,5,6, 4,6,7}, // 앞
-    {0,4,7, 0,7,3}, // 왼
-    {1,5,6, 1,6,2}, // 오
-    {3,2,6, 3,6,7}, // 위
-    {0,1,5, 0,5,4}  // 아래
+    // 뒤(0,1,2,3): z = -0.5, 앞에서 볼 때 반시계
+    {0,1,2, 0,2,3},
+    // 앞(4,5,6,7): z = +0.5, 앞에서 볼 때 반시계
+    {4,5,6, 4,6,7},
+    // 왼(0,4,7,3): x = -0.5, 왼쪽에서 볼 때 반시계
+    {0,4,7, 0,7,3},
+    // 오(1,5,6,2): x = +0.5, 오른쪽에서 볼 때 반시계
+    {1,5,6, 1,6,2},
+    // 위(3,2,6,7): y = +0.5, 위에서 볼 때 반시계
+    {3,2,6, 3,6,7},
+    // 아래(0,1,5,4): y = -0.5, 아래에서 볼 때 반시계
+    {0,1,5, 0,5,4}
 };
 
 //-------------------- 큐브 면별 정점/색상 배열 생성 함수 --------------------
@@ -161,6 +167,9 @@ int main(int argc, char** argv)
     glewInit();
 
     glEnable(GL_DEPTH_TEST); // 깊이 버퍼 사용
+    glEnable(GL_CULL_FACE);  // 은면제거 활성화
+    glCullFace(GL_BACK);     // 뒷면 제거
+    glFrontFace(GL_CCW);     // 반시계 방향이 앞면
 
     make_vertexShaders();
     make_fragmentShaders();
@@ -188,8 +197,8 @@ GLvoid DrawScene() {
 
     // 1. 변환 행렬 생성 (x축 30도, y축 -30도 회전)
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1, 0, 0));
-    model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0, 1, 0));
     GLuint loc = glGetUniformLocation(shaderProgramID, "modelTransform");
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -198,7 +207,7 @@ GLvoid DrawScene() {
     glDrawArrays(GL_LINES, 0, 6);
     glBindVertexArray(0);
 
-    // 3. 큐브 그리기 (면별 단색)
+    // 3. 큐브 그리기 (면별 단색, 은면제거 적용)
     glBindVertexArray(cubeVao);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
