@@ -10,10 +10,12 @@
 #include <random>
 #include <stdlib.h>
 #include <stdio.h>
+#include "GoodFunction.h"
 
 void make_vertexShaders();
 void make_fragmentShaders();
 void InitBuffer();
+void InitAxisBuffer();
 char* filetobuf(const char* file);
 
 GLuint make_shaderProgram();
@@ -32,16 +34,30 @@ GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint vao; // --- 버텍스 배열 객체 이름
 GLuint vbo[2];
+GLuint axisVao = 0, axisVbo[2];
 
 // 전역 변수
-float gl_x, gl_y; // 마우스 좌표
 std::random_device rd;
 std::mt19937 gen(rd());
+float gl_x, gl_y; // 마우스 좌표
+
+// 축 좌표와 색상
+GLfloat axisVertices[] = {
+    -1,0,0,  1,0,0,   // x축
+     0,-1,0, 0,1,0,   // y축
+     0,0,-1, 0,0,1    // z축
+};
+GLfloat axisColors[] = {
+    1,0,0, 1,0,0,     // x축 빨강
+    0,1,0, 0,1,0,     // y축 초록
+    0,0,1, 0,0,1      // z축 파랑
+};
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
     width = 800;
     height = 800;
+
     //--- 윈도우 생성하기
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
@@ -56,6 +72,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     make_fragmentShaders(); //--- 프래그먼트 세이더 만들기
     shaderProgramID = make_shaderProgram();
     InitBuffer();
+    InitAxisBuffer();
 
     //--- 세이더 프로그램 만들기
     glutDisplayFunc(DrawScene); //--- 출력 콜백 함수
@@ -67,9 +84,26 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutMainLoop();
 }
 
-GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
-{
-    glutSwapBuffers(); // 화면에 출력하기
+GLvoid DrawScene() {
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(shaderProgramID);
+
+    // 1. 변환 행렬 생성
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(-30.0f), glm::vec3(0, 1, 0));
+
+    // 2. uniform으로 전달
+    GLuint loc = glGetUniformLocation(shaderProgramID, "modelTransform");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model));
+
+    // 3. 축 그리기
+    glBindVertexArray(axisVao);
+    glDrawArrays(GL_LINES, 0, 6);
+    glBindVertexArray(0);
+
+    glutSwapBuffers();
 }
 
 GLvoid Keyboard(unsigned char key, int x, int y) {
@@ -118,6 +152,24 @@ void InitBuffer() {
     glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0); //--- attribute 1: 버텍스 색상
     glEnableVertexAttribArray(1); //--- attribute 1 사용 설정
+}
+void InitAxisBuffer() {
+    glGenVertexArrays(1, &axisVao);
+    glBindVertexArray(axisVao);
+
+    glGenBuffers(2, axisVbo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, axisVbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axisVertices), axisVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, axisVbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(axisColors), axisColors, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
 }
 
 void make_vertexShaders()
@@ -198,4 +250,3 @@ char* filetobuf(const char* file)
     buf[length] = 0; // Null terminator
     return buf; // Return the buffer
 }
-

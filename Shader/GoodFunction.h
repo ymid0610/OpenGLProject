@@ -24,3 +24,16 @@ int CheckQuadrant(float x, float y) {
     else return 4; // 4»çºÐ¸é  
 }
 
+struct Vertex {
+    GLfloat x, y, z;
+};
+
+struct Line {
+    Vertex v1, v2;
+};
+
+void DrawAxis()
+{
+
+}
+
