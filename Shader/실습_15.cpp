@@ -40,6 +40,7 @@ GLuint cubeVao = 0, cubeVbo[2];
 std::random_device rd;
 std::mt19937 gen(rd());
 float gl_x, gl_y;
+static int drawFace = 0; // 0: 전체, 1~6: 해당 면만
 
 //-------------------- 좌표축 데이터 --------------------
 GLfloat axisVertices[] = {
@@ -209,14 +210,31 @@ GLvoid DrawScene() {
 
     // 3. 큐브 그리기 (면별 단색, 은면제거 적용)
     glBindVertexArray(cubeVao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    if (drawFace) {
+        for (int i = 0; i < 6; ++i) {
+            if (drawFace & (1 << i)) {
+                glDrawArrays(GL_TRIANGLES, i * 6, 6);
+            }
+        }
+    }
+    else {
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
     glBindVertexArray(0);
 
-    glutSwapBuffers();
+	glutSwapBuffers();
 }
 
 //-------------------- 기타 콜백 함수 --------------------
-GLvoid Keyboard(unsigned char key, int x, int y) { glutPostRedisplay(); }
+GLvoid Keyboard(unsigned char key, int x, int y) {
+    if (key >= '1' && key <= '6') {
+        drawFace ^= (1 << (key - '1')); // 토글: 누르면 켜고, 또 누르면 끔
+    }
+    else if (key == '0') {
+        drawFace = 0; // 전체 면
+    }
+    glutPostRedisplay();
+}
 GLvoid Mouse(int button, int state, int x, int y) { glutPostRedisplay(); }
 GLvoid Motion(int x, int y) { glutPostRedisplay(); }
 GLvoid Timer(int value) { glutPostRedisplay(); }
